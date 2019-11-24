@@ -4,7 +4,7 @@ import sys
 
 import setuptools
 
-import sprockets.logging
+import sprockets_logging
 
 
 install_requires = []
@@ -13,7 +13,7 @@ tests_require = ['nose>=1.3,<2', 'tornado>3,<5']
 
 setuptools.setup(
     name='sprockets.logging',
-    version=sprockets.logging.__version__,
+    version=sprockets_logging.version,
     description='Making logs nicer since 2015!',
     long_description=codecs.open('README.rst', encoding='utf-8').read(),
     url='https://github.com/sprockets/sprockets.logging.git',
@@ -37,7 +37,6 @@ setuptools.setup(
         'Topic :: Software Development :: Libraries :: Python Modules'
     ],
     packages=setuptools.find_packages(),
-    namespace_packages=['sprockets'],
     install_requires=install_requires,
     setup_requires=setup_requires,
     tests_require=tests_require,

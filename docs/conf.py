@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import sphinx_rtd_theme
 
-from sprockets.logging import version_info, __version__
+from sprockets_logging import version_info, __version__
 
 needs_sphinx = '1.0'
 extensions = [
@@ -12,9 +12,9 @@ extensions = [
 templates_path = []
 source_suffix = '.rst'
 master_doc = 'index'
-project = 'sprockets.logging'
+project = 'sprockets_logging'
 author = 'Dave Shawley'
-copyright = '2015, AWeber Communications'
+copyright = '2019, AWeber Communications'
 version = '.'.join(__version__.split('.')[0:1])
 release = __version__
 if len(version_info) > 3:
@@ -25,6 +25,5 @@ html_theme = 'sphinx_rtd_theme'
 html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 intersphinx_mapping = {
     'python': ('https://docs.python.org/', None),
-    'sprockets': ('https://sprockets.readthedocs.org/en/latest/', None),
     'tornado': ('http://www.tornadoweb.org/en/stable/', None),
 }

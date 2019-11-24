@@ -3,7 +3,10 @@ Version History
 
 `Next Release`_
 ---------------
-- Updated ``tornado_log_function`` to work with Tornado 4.3.
+*Complete reboot*
+
+- Replace namespace packaging with ``sprockets_logging`` package
+- Split single module into *logext* and *access* modules
 
 `1.3.2`_ Oct  2, 2015
 ---------------------

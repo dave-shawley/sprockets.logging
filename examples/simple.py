@@ -1,13 +1,13 @@
 import logging
 import sys
 
-import sprockets.logging
+from sprockets_logging import logext
 
 
 formatter = logging.Formatter('%(levelname)s %(message)s {%(context)s}')
 handler = logging.StreamHandler(sys.stdout)
 handler.setFormatter(formatter)
-handler.addFilter(sprockets.logging.ContextFilter(properties=['context']))
+handler.addFilter(logext.ContextFilter(properties=['context']))
 logging.Logger.root.addHandler(handler)
 logging.Logger.root.setLevel(logging.DEBUG)
 

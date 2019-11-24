@@ -1,40 +1,7 @@
-"""
-Make good log output easier.
-
-- :class:`ContextFilter` adds fixed properties to a log record
-- :class:`JSONRequestFormatter` formats log records as JSON output
-- :method:`tornado_log_function` is for use as the
-    :class`tornado.web.Application.log_function` in conjunction with
-    :class:`JSONRequestFormatter` to output log lines as JSON.
-
-"""
-from __future__ import absolute_import
-
-from logging import config
 import json
 import logging
-import os
 import sys
 import traceback
-
-try:
-    from tornado import escape, log
-except ImportError:  # pragma no cover
-    escape = None
-    log = None
-
-version_info = (1, 3, 2)
-__version__ = '.'.join(str(v) for v in version_info)
-
-# Shortcut methods and constants to avoid needing to import logging directly
-dictConfig = config.dictConfig
-getLogger = logging.getLogger
-
-DEBUG = logging.DEBUG
-INFO = logging.INFO
-WARN = logging.WARN
-WARNING = logging.WARNING
-ERROR = logging.ERROR
 
 
 class ContextFilter(logging.Filter):
@@ -120,40 +87,6 @@ class JSONRequestFormatter(logging.Formatter):
         if 'message' in output:
             output.pop('request', None)
         return json.dumps(output)
-
-
-def tornado_log_function(handler):
-    """Assigned when creating a :py:class:`tornado.web.Application` instance
-    by passing the method as the ``log_function`` argument:
-
-    .. code:: python
-
-        app = tornado.web.Application([('/', RequestHandler)],
-                                      log_function=tornado_log_function)
-
-    :type handler: :py:class:`tornado.web.RequestHandler`
-
-    """
-    status_code = handler.get_status()
-    if status_code < 400:
-        log_method = log.access_log.info
-    elif status_code < 500:
-        log_method = log.access_log.warning
-    else:
-        log_method = log.access_log.error
-    correlation_id = (getattr(handler, 'correlation_id', None) or
-                      handler.request.headers.get('Correlation-ID', None))
-    log_method('', {'correlation_id': correlation_id,
-                    'duration': 1000.0 * handler.request.request_time(),
-                    'headers': dict(handler.request.headers),
-                    'method': handler.request.method,
-                    'path': handler.request.path,
-                    'protocol': handler.request.protocol,
-                    'query_args': escape.recursive_unicode(
-                        handler.request.query_arguments),
-                    'remote_ip': handler.request.remote_ip,
-                    'status_code': status_code,
-                    'environment': os.environ.get('ENVIRONMENT')})
 
 
 def currentframe():

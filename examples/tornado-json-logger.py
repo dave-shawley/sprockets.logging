@@ -3,7 +3,7 @@ import signal
 import uuid
 
 from tornado import ioloop, web
-import sprockets.logging
+from sprockets_logging import access, logext
 
 
 LOG_CONFIG = {
@@ -18,12 +18,12 @@ LOG_CONFIG = {
    },
    'formatters': {
       'simple': {
-         '()': sprockets.logging.JSONRequestFormatter
+         '()': logext.JSONRequestFormatter
       }
    },
    'filters': {
       'context': {
-         '()': 'sprockets.logging.ContextFilter',
+         '()': logext.ContextFilter,
          'properties': ['context']
       }
    },
@@ -55,7 +55,6 @@ class RequestHandler(web.RequestHandler):
    def get(self, object_id):
       self.logger.debug('fetchin %s', object_id)
       self.set_status(200)
-      return self.finish()
 
 def sig_handler(signo, frame):
    logging.info('caught signal %d, stopping IO loop', signo)
@@ -68,7 +67,7 @@ if __name__ == '__main__':
    app = web.Application([
       web.url('/(?P<object_id>\w+)', RequestHandler,
               kwargs={'parent_log': logger}),
-   ], log_function=sprockets.logging.tornado_log_function)
+   ], log_function=access.log_json)
    app.listen(8000)
    signal.signal(signal.SIGINT, sig_handler)
    signal.signal(signal.SIGTERM, sig_handler)

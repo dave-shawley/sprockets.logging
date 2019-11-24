@@ -6,7 +6,7 @@ import uuid
 
 from tornado import web, testing
 
-import sprockets.logging
+from sprockets_logging import access, logext
 
 
 def setup_module():
@@ -59,7 +59,7 @@ class TornadoLogFunctionTests(TornadoLoggingTestMixin,
     def get_app(self):
         return web.Application(
             [web.url('/', SimpleHandler)],
-            log_function=sprockets.logging.tornado_log_function)
+            log_function=access.log_json)
 
     @property
     def access_record(self):
@@ -132,12 +132,12 @@ class JSONFormatterTests(TornadoLoggingTestMixin, testing.AsyncHTTPTestCase):
 
     def setUp(self):
         super(JSONFormatterTests, self).setUp()
-        self.recorder.setFormatter(sprockets.logging.JSONRequestFormatter())
+        self.recorder.setFormatter(logext.JSONRequestFormatter())
 
     def get_app(self):
         return web.Application(
             [web.url('/', SimpleHandler)],
-            log_function=sprockets.logging.tornado_log_function)
+            log_function=access.log_json)
 
     def get_log_line(self, log_name):
         for record, line in self.recorder.emitted:
@@ -169,8 +169,8 @@ class ContextFilterTests(TornadoLoggingTestMixin, unittest.TestCase):
         self.logger = logging.getLogger('test-logger')
         self.recorder.setFormatter(
             logging.Formatter('%(message)s {CID %(correlation_id)s}'))
-        self.recorder.addFilter(sprockets.logging.ContextFilter(
-            properties=['correlation_id']))
+        self.recorder.addFilter(
+            logext.ContextFilter(properties=['correlation_id']))
 
     def test_that_property_is_set_to_none_by_filter_when_missing(self):
         self.logger.error('error message')

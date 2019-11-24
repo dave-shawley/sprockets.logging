@@ -3,7 +3,7 @@ Examples
 
 Simple Usage
 ------------
-The following snippet uses :class:`sprockets.logging.ContextFilter`
+The following snippet uses :class:`sprockets_logging.logext.ContextFilter`
 to insert context information into a message using a
 :class:`logging.LoggerAdapter` instance.
 
@@ -22,11 +22,11 @@ insert context easily with :class:`logging.LoggerAdapter`.
 Tornado Application JSON Logging
 --------------------------------
 If you're looking to log Tornado requests as JSON, the
-:class:`sprockets.logging.JSONRequestFormatter` class works in conjunction with
-the :func:`tornado_log_function` method to output all Tornado log entries as
+:class:`sprockets_logging.logext.JSONRequestFormatter` class works in conjunction with
+the :func:`sprockets_logging.access.log_json` method to output all Tornado log entries as
 JSON objects. In the following example, the dictionary-based configuration is
-expanded upon to include specify the :class:`sprockets.logging.JSONRequestFormatter`
-as the formatter and passes :func:`tornado_log_function` in as the ``log_function``
+expanded upon to include specify the :class:`sprockets_logging.logext.JSONRequestFormatter`
+as the formatter and passes :func:`sprockets_logging.access.log_json` in as the ``log_function``
 when creating the Tornado application.
 
 .. literalinclude:: ../examples/tornado-json-logger.py

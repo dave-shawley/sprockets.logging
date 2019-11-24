@@ -1,4 +1,7 @@
 API Reference
 =============
-.. automodule:: sprockets.logging
+.. automodule:: sprockets_logging.logext
+   :members:
+
+.. automodule:: sprockets_logging.access
    :members:

@@ -6,13 +6,13 @@ Making logs nicer since 2015!
 
 Installation
 ------------
-``sprockets.logging`` is available on the
-`Python Package Index <https://pypi.python.org/pypi/sprockets.logging>`_
+``sprockets_logging`` is available on the
+`Python Package Index <https://pypi.python.org/pypi/sprockets_logging>`_
 and can be installed via ``pip`` or ``easy_install``:
 
 .. code-block:: bash
 
-   pip install sprockets.logging
+   pip install sprockets_logging
 
 Documentation
 -------------
@@ -24,20 +24,20 @@ Requirements
 
 Example
 -------
-This examples demonstrates the most basic usage of ``sprockets.logging``
+This examples demonstrates the most basic usage of ``sprockets_logging``
 
 .. code-block:: python
 
    import logging
    import sys
 
-   import sprockets.logging
+   from sprockets_logging import logext
 
 
    formatter = logging.Formatter('%(levelname)s %(message)s {%(context)s}')
    handler = logging.StreamHandler(sys.stdout)
    handler.setFormatter(formatter)
-   handler.addFilter(sprockets.logging.ContextFilter(properties=['context']))
+   handler.addFilter(logext.ContextFilter(properties=['context']))
    logging.Logger.root.addHandler(handler)
    logging.Logger.root.setLevel(logging.DEBUG)
 
@@ -53,11 +53,11 @@ This examples demonstrates the most basic usage of ``sprockets.logging``
 
 Source
 ------
-``sprockets.logging`` source is available on Github at `https://github.com/sprockets/sprockets.logging <https://github.com/sprockets/sprockets.logging>`_
+``sprockets_logging`` source is available on Github at `https://github.com/sprockets/sprockets.logging <https://github.com/sprockets/sprockets.logging>`_
 
 License
 -------
-``sprockets.logging`` is released under the `3-Clause BSD license <https://github.com/sprockets/sprockets.logging/blob/master/LICENSE>`_.
+``sprockets_logging`` is released under the `3-Clause BSD license <https://github.com/sprockets/sprockets.logging/blob/master/LICENSE>`_.
 
 
 .. |Version| image:: https://badge.fury.io/py/sprockets.logging.svg?

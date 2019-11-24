@@ -3,7 +3,6 @@ import signal
 import uuid
 
 from tornado import ioloop, web
-import sprockets.logging
 
 
 LOG_CONFIG = {
@@ -24,7 +23,7 @@ LOG_CONFIG = {
    },
    'filters': {
       'context': {
-         '()': 'sprockets.logging.ContextFilter',
+         '()': 'sprockets_logging.logext.ContextFilter',
          'properties': ['context'],
       },
    },
