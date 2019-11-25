@@ -62,9 +62,9 @@ class JSONRequestFormatter(logging.Formatter):
 
         """
         try:
-            traceback = self.extract_exc_record(*record.exc_info)
-        except:
-            traceback = None
+            exc_stack = self.extract_exc_record(*record.exc_info)
+        except Exception:
+            exc_stack = None
 
         output = {
             'name': record.name,
@@ -77,7 +77,7 @@ class JSONRequestFormatter(logging.Formatter):
             'thread': record.threadName,
             'file': record.filename,
             'request': record.args,
-            'traceback': traceback
+            'traceback': exc_stack,
         }
         for key, value in list(output.items()):
             if not value:

@@ -66,7 +66,7 @@ if __name__ == '__main__':
     logging.config.dictConfig(LOG_CONFIG)
     logger = logging.getLogger('app')
     app = web.Application([
-        web.url('/(?P<object_id>\w+)',
+        web.url(r'/(?P<object_id>\w+)',
                 RequestHandler,
                 kwargs={'parent_log': logger}),
     ])
