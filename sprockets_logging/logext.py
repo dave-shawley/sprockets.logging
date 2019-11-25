@@ -17,7 +17,6 @@ class ContextFilter(logging.Filter):
     ugly ``KeyError`` exception.
 
     """
-
     def __init__(self, name='', properties=None):
         logging.Filter.__init__(self, name)
         self.properties = list(properties) if properties else []
@@ -34,7 +33,6 @@ class JSONRequestFormatter(logging.Formatter):
     the log data as JSON.
 
     """
-
     def extract_exc_record(self, typ, val, tb):
         """Create a JSON representation of the traceback given the records
         exc_info
@@ -46,14 +44,14 @@ class JSONRequestFormatter(logging.Formatter):
         :rtype: dict
 
         """
-        exc_record = {'type': typ.__name__,
-                      'message': str(val),
-                      'stack': []}
+        exc_record = {'type': typ.__name__, 'message': str(val), 'stack': []}
         for file_name, line_no, func_name, txt in traceback.extract_tb(tb):
-            exc_record['stack'].append({'file': file_name,
-                                        'line': str(line_no),
-                                        'func': func_name,
-                                        'text': txt})
+            exc_record['stack'].append({
+                'file': file_name,
+                'line': str(line_no),
+                'func': func_name,
+                'text': txt
+            })
         return exc_record
 
     def format(self, record):
@@ -68,17 +66,19 @@ class JSONRequestFormatter(logging.Formatter):
         except:
             traceback = None
 
-        output = {'name': record.name,
-                  'module': record.module,
-                  'message': record.msg % record.args,
-                  'level': logging.getLevelName(record.levelno),
-                  'line_number': record.lineno,
-                  'process': record.processName,
-                  'timestamp': self.formatTime(record),
-                  'thread': record.threadName,
-                  'file': record.filename,
-                  'request': record.args,
-                  'traceback': traceback}
+        output = {
+            'name': record.name,
+            'module': record.module,
+            'message': record.msg % record.args,
+            'level': logging.getLevelName(record.levelno),
+            'line_number': record.lineno,
+            'process': record.processName,
+            'timestamp': self.formatTime(record),
+            'thread': record.threadName,
+            'file': record.filename,
+            'request': record.args,
+            'traceback': traceback
+        }
         for key, value in list(output.items()):
             if not value:
                 del output[key]

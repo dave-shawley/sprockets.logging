@@ -14,7 +14,6 @@ def setup_module():
 
 
 class SimpleHandler(web.RequestHandler):
-
     def get(self):
         if self.get_query_argument('runtime_error', default=None):
             raise RuntimeError(self.get_query_argument('runtime_error'))
@@ -25,7 +24,6 @@ class SimpleHandler(web.RequestHandler):
 
 
 class RecordingHandler(logging.Handler):
-
     def __init__(self):
         super(RecordingHandler, self).__init__()
         self.emitted = []
@@ -35,7 +33,6 @@ class RecordingHandler(logging.Handler):
 
 
 class TornadoLoggingTestMixin(object):
-
     def setUp(self):
         super(TornadoLoggingTestMixin, self).setUp()
         self.access_log = logging.getLogger('tornado.access')
@@ -55,11 +52,9 @@ class TornadoLoggingTestMixin(object):
 
 class TornadoLogFunctionTests(TornadoLoggingTestMixin,
                               testing.AsyncHTTPTestCase):
-
     def get_app(self):
-        return web.Application(
-            [web.url('/', SimpleHandler)],
-            log_function=access.log_json)
+        return web.Application([web.url('/', SimpleHandler)],
+                               log_function=access.log_json)
 
     @property
     def access_record(self):
@@ -129,15 +124,13 @@ class TornadoLogFunctionTests(TornadoLoggingTestMixin,
 
 
 class JSONFormatterTests(TornadoLoggingTestMixin, testing.AsyncHTTPTestCase):
-
     def setUp(self):
         super(JSONFormatterTests, self).setUp()
         self.recorder.setFormatter(logext.JSONRequestFormatter())
 
     def get_app(self):
-        return web.Application(
-            [web.url('/', SimpleHandler)],
-            log_function=access.log_json)
+        return web.Application([web.url('/', SimpleHandler)],
+                               log_function=access.log_json)
 
     def get_log_line(self, log_name):
         for record, line in self.recorder.emitted:
@@ -163,7 +156,6 @@ class JSONFormatterTests(TornadoLoggingTestMixin, testing.AsyncHTTPTestCase):
 
 
 class ContextFilterTests(TornadoLoggingTestMixin, unittest.TestCase):
-
     def setUp(self):
         super(ContextFilterTests, self).setUp()
         self.logger = logging.getLogger('test-logger')
