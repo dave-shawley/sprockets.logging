@@ -1,6 +1,5 @@
 import json
 import logging
-import sys
 import traceback
 
 
@@ -64,11 +63,10 @@ class JSONRequestFormatter(logging.Formatter):
         :rtype: str
 
         """
-        if hasattr(record, 'exc_info'):
-            try:
-                traceback = self.extract_exc_record(*record.exc_info)
-            except:
-                traceback = None
+        try:
+            traceback = self.extract_exc_record(*record.exc_info)
+        except:
+            traceback = None
 
         output = {'name': record.name,
                   'module': record.module,
@@ -87,24 +85,3 @@ class JSONRequestFormatter(logging.Formatter):
         if 'message' in output:
             output.pop('request', None)
         return json.dumps(output)
-
-
-def currentframe():
-    """Return the frame object for the caller's stack frame."""
-    try:
-        raise Exception
-    except:
-        traceback = sys.exc_info()[2]
-        frame = traceback.tb_frame
-        while True:
-            if hasattr(frame, 'f_code'):
-                filename = frame.f_code.co_filename
-                if filename.endswith('logging.py') or \
-                        filename.endswith('logging/__init__.py'):
-                    frame = frame.f_back
-                    continue
-                return frame
-        return traceback.tb_frame.f_back
-
-# Monkey-patch currentframe
-logging.currentframe = currentframe
