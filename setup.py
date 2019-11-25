@@ -1,7 +1,4 @@
 #!/usr/bin/env python
-import codecs
-import sys
-
 import setuptools
 
 import sprockets_logging
@@ -15,7 +12,7 @@ setuptools.setup(
     name='sprockets.logging',
     version=sprockets_logging.version,
     description='Making logs nicer since 2015!',
-    long_description=codecs.open('README.rst', encoding='utf-8').read(),
+    long_description=open('README.rst').read(),
     url='https://github.com/sprockets/sprockets.logging.git',
     author='Dave Shawley',
     author_email='daves@aweber.com',
@@ -27,12 +24,10 @@ setuptools.setup(
         'License :: OSI Approved :: BSD License',
         'Natural Language :: English',
         'Operating System :: OS Independent',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: Implementation :: CPython',
-        'Programming Language :: Python :: Implementation :: PyPy',
         'Topic :: Software Development :: Libraries',
         'Topic :: Software Development :: Libraries :: Python Modules'
     ],
