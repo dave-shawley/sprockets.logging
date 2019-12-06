@@ -35,21 +35,21 @@ Version History
 
 `1.1.0`_ Jun 18, 2015
 ---------------------
- - Added :class:`sprockets.logging.JSONRequestFormatter`
- - Added :func:`sprockets.logging.tornado_log_function`
+ - Added ``sprockets.logging.JSONRequestFormatter``
+ - Added ``sprockets.logging.tornado_log_function``
  - Added convenience constants and methods as a pass through to Python's logging package:
 
-  - :data:`sprockets.logging.DEBUG` to :data:`logging.DEBUG`
-  - :data:`sprockets.logging.ERROR` to :data:`logging.ERROR`
-  - :data:`sprockets.logging.INFO` to :data:`logging.INFO`
-  - :data:`sprockets.logging.WARN` to :data:`logging.WARN`
-  - :data:`sprockets.logging.WARNING` to :data:`logging.WARNING`
-  - :func:`sprockets.logging.dictConfig` to :func:`logging.config.dictConfig`
-  - :func:`sprockets.logging.getLogger` to :func:`logging.getLogger`
+  - ``sprockets.logging.DEBUG`` to ``logging.DEBUG``
+  - ``sprockets.logging.ERROR`` to ``logging.ERROR``
+  - ``sprockets.logging.INFO`` to ``logging.INFO``
+  - ``sprockets.logging.WARN`` to ``logging.WARN``
+  - ``sprockets.logging.WARNING`` to ``logging.WARNING``
+  - ``sprockets.logging.dictConfig`` to :func:`logging.config.dictConfig`
+  - ``sprockets.logging.getLogger`` to :func:`logging.getLogger`
 
 `1.0.0`_ Jun 09, 2015
 ---------------------
- - Added :class:`sprockets.logging.ContextFilter`
+ - Added ``sprockets.logging.ContextFilter``
 
 .. _Next Release: https://github.com/sprockets/sprockets.logging/compare/1.3.2...master
 
