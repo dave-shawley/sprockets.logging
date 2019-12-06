@@ -1,29 +1,26 @@
 #!/usr/bin/env python
-import sphinx_rtd_theme
 
-from sprockets_logging import version_info, __version__
+import sprockets_logging
 
 needs_sphinx = '1.0'
-extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.intersphinx',
-    'sphinxcontrib.httpdomain',
-]
+extensions = []
 templates_path = []
 source_suffix = '.rst'
 master_doc = 'index'
 project = 'sprockets_logging'
 author = 'Dave Shawley'
 copyright = '2019, AWeber Communications'
-version = '.'.join(__version__.split('.')[0:1])
-release = __version__
-if len(version_info) > 3:
-    release += '-{0}'.format(str(v) for v in version_info[3:])
-exclude_patterns = []
-pygments_style = 'sphinx'
-html_theme = 'sphinx_rtd_theme'
-html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+version = '.'.join(str(c) for c in sprockets_logging.version_info[:2])
+release = sprockets_logging.version
+html_static_path = ['.']
+need_sphinx = '2.0'
+
+# https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html
+extensions.append('sphinx.ext.autodoc')
+
+# https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html
+extensions.append('sphinx.ext.intersphinx')
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/', None),
-    'tornado': ('http://www.tornadoweb.org/en/stable/', None),
+    'python': ('https://docs.python.org/3', None),
+    'tornado': ('https://www.tornadoweb.org/en/stable/', None),
 }

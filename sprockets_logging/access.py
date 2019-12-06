@@ -1,3 +1,13 @@
+"""
+access: functions for formatting access logs
+============================================
+
+This module contains functions that format Tornado access logs in
+various formats.  Each function is meant to be passed as the
+``log_function`` keyword to the :class:`tornado.web.Application`
+initializer.
+
+"""
 import logging
 import os
 
@@ -6,15 +16,16 @@ import tornado.log
 
 
 def log_json(handler):
-    """Assigned when creating a :py:class:`tornado.web.Application` instance
-    by passing the method as the ``log_function`` argument:
+    """
+    Format access logs as JSON documents.
+
+    :param tornado.web.RequestHandler handler: the handler that
+        processed the request
 
     .. code:: python
 
-        app = tornado.web.Application([('/', RequestHandler)],
-                                      log_function=tornado_log_function)
-
-    :type handler: :py:class:`tornado.web.RequestHandler`
+       app = tornado.web.Application([('/', RequestHandler)],
+                                     log_function=tornado_log_function)
 
     """
     status_code = handler.get_status()

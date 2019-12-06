@@ -1,3 +1,17 @@
+"""
+logext: extensions to the standard logging module
+=================================================
+
+This module contains classes that work directly with the standard
+:mod:`logging` module.  You should use this when configuring the
+log layer either manually, via :func:`~logging.config.fileConfig` or
+via :func:`~logging.config.dictConfig`.
+
+- :class:`~.ContextFilter` adds properties to every log record so
+  that you can safely refer to them in a format
+- :class:`~JSONRequestFormatter` formats log lines as JSON objects
+
+"""
 import json
 import logging
 import traceback
@@ -7,14 +21,15 @@ class ContextFilter(logging.Filter):
     """
     Ensures that properties exist on a LogRecord.
 
-    :param list|None properties: optional list of properties that
+    :param list properties: optional list of properties that
         will be added to LogRecord instances if they are missing
+    :type properties: list or None
 
     This filter implementation will ensure that a set of properties
     exists on every log record which means that you can always refer
     to custom properties in a format string.  Without this, referring
     to a property that is not explicitly passed in will result in an
-    ugly ``KeyError`` exception.
+    ugly :exc:`KeyError` exception.
 
     """
     def __init__(self, name='', properties=None):
@@ -22,6 +37,13 @@ class ContextFilter(logging.Filter):
         self.properties = list(properties) if properties else []
 
     def filter(self, record):
+        """
+        Overridden to add properties to `record`.
+
+        :param logging.LogRecord record: the record to modify
+        :returns: always returns :data:`True`
+
+        """
         for property_name in self.properties:
             if not hasattr(record, property_name):
                 setattr(record, property_name, None)
