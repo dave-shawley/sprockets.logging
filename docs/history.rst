@@ -7,6 +7,8 @@ Version History
 
 - Replace namespace packaging with ``sprockets_logging`` package
 - Split single module into *logext* and *access* modules
+- The JSON formatter now includes all properties of a ``LogRecord`` instead of 
+  hard-coding a fixed set of them.
 
 `1.3.2`_ Oct  2, 2015
 ---------------------

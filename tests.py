@@ -126,7 +126,8 @@ class TornadoLogFunctionTests(TornadoLoggingTestMixin,
 class JSONFormatterTests(TornadoLoggingTestMixin, testing.AsyncHTTPTestCase):
     def setUp(self):
         super(JSONFormatterTests, self).setUp()
-        self.recorder.setFormatter(logext.JSONRequestFormatter())
+        self.formatter = logext.JSONRequestFormatter()
+        self.recorder.setFormatter(self.formatter)
 
     def get_app(self):
         return web.Application([web.url('/', SimpleHandler)],
@@ -139,7 +140,7 @@ class JSONFormatterTests(TornadoLoggingTestMixin, testing.AsyncHTTPTestCase):
 
     def test_that_messages_are_json_encoded(self):
         self.fetch('/')
-        for record, line in self.recorder.emitted:
+        for _, line in self.recorder.emitted:
             json.loads(line)
 
     def test_that_exception_has_traceback(self):
@@ -150,9 +151,26 @@ class JSONFormatterTests(TornadoLoggingTestMixin, testing.AsyncHTTPTestCase):
 
     def test_that_successes_do_not_have_traceback(self):
         self.fetch('/')
-        for record, line in self.recorder.emitted:
+        for _, line in self.recorder.emitted:
             entry = json.loads(line)
             self.assertNotIn('traceback', entry)
+
+    def test_that_special_case_attributes_are_not_included(self):
+        self.fetch('/')
+        for _, line in self.recorder.emitted:
+            entry = json.loads(line)
+            for name in {'args', 'msg', 'exc_info'}:
+                self.assertNotIn(name, entry)
+            for name in entry.keys():
+                self.assertFalse(name.startswith('__') and name.endswith('__'))
+
+    def test_that_special_case_attributes_are_correctly_handled(self):
+        self.fetch('/')
+        for record, line in self.recorder.emitted:
+            entry = json.loads(line)
+            self.assertEqual(entry['message'], record.getMessage())
+            self.assertEqual(entry['timestamp'],
+                             self.formatter.formatTime(record))
 
 
 class ContextFilterTests(TornadoLoggingTestMixin, unittest.TestCase):

@@ -51,59 +51,76 @@ class ContextFilter(logging.Filter):
 
 
 class JSONRequestFormatter(logging.Formatter):
-    """Instead of spitting out a "human readable" log line, this outputs
-    the log data as JSON.
+    """
+    Format lines as JSON documents.
+
+    This formatter dumps the log record as a JSON document.  It includes
+    every attribute from the :class:`~logging.LogRecord` except for:
+
+    - *dunder* attributes
+    - :func:`callable` values
+    - attributes that are special-cased:
+
+      - the msg and args attributes are formatted with
+        :meth:`~logging.LogRecord.getMessage`
+      - the timestamp attribute is formatted with
+        :meth:`~logging.Formatter.formatTime`
+      - the exc_info attribute is transformed into an embedded document
+        by calling :meth:`.extract_exc_record`
+
+    This formatter is meant to be used with a :class:`.ContextFilter`
+    to automatically add attributes to every logged message.
 
     """
-    def extract_exc_record(self, typ, val, tb):
-        """Create a JSON representation of the traceback given the records
-        exc_info
 
-        :param `Exception` typ: Exception type of the exception being handled
-        :param `Exception` instance val: instance of the Exception class
-        :param `traceback` tb: traceback object with the call stack
+    _SPECIAL_CASES = frozenset({'msg', 'args', 'timestamp', 'exc_info'})
 
-        :rtype: dict
-
+    @staticmethod
+    def extract_exc_record(record):
         """
-        exc_record = {'type': typ.__name__, 'message': str(val), 'stack': []}
-        for file_name, line_no, func_name, txt in traceback.extract_tb(tb):
-            exc_record['stack'].append({
-                'file': file_name,
-                'line': str(line_no),
-                'func': func_name,
-                'text': txt
-            })
-        return exc_record
+        Extract an exception record if one is present.
 
-    def format(self, record):
-        """Return the log data as JSON
-
-        :param record logging.LogRecord: The record to format
-        :rtype: str
+        :param logging.LogRecord record: log record to extract the
+            traceback from
+        :rtype: dict or None
 
         """
         try:
-            exc_stack = self.extract_exc_record(*record.exc_info)
+            typ, val, tb = record.exc_info
+            return {
+                'message': str(val),
+                'stack': [{
+                    'file': file_,
+                    'func': func,
+                    'line': str(line),
+                    'text': text,
+                } for file_, line, func, text in traceback.extract_tb(tb)],
+                'type': typ.__name__,
+            }
         except Exception:
-            exc_stack = None
+            return None
 
+    def _should_be_logged(self, name, value):
+        """Should `name` and `value` be included in JSON document?"""
+        return (name not in self._SPECIAL_CASES
+                and not (name.startswith('__') and name.endswith('__'))
+                and not callable(value))
+
+    def format(self, record):
+        """Return the log data as a JSON document
+
+        :param logging.LogRecord record: The record to format
+        :rtype: str
+
+        """
         output = {
-            'name': record.name,
-            'module': record.module,
-            'message': record.msg % record.args,
-            'level': logging.getLevelName(record.levelno),
-            'line_number': record.lineno,
-            'process': record.processName,
+            'message': record.getMessage(),
             'timestamp': self.formatTime(record),
-            'thread': record.threadName,
-            'file': record.filename,
-            'request': record.args,
-            'traceback': exc_stack,
         }
-        for key, value in list(output.items()):
-            if not value:
-                del output[key]
-        if 'message' in output:
-            output.pop('request', None)
+        for name, value in record.__dict__.items():
+            if self._should_be_logged(name, value):
+                output[name] = value
+        tb = self.extract_exc_record(record)
+        if tb:
+            output['traceback'] = tb
         return json.dumps(output)
