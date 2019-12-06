@@ -4,6 +4,7 @@ import logging
 import os
 import unittest
 import uuid
+import warnings
 
 from tornado import web, testing
 
@@ -12,6 +13,8 @@ from sprockets_logging import access, logext
 
 def setup_module():
     os.environ.setdefault('ENVIRONMENT', 'development')
+    warnings.simplefilter('default')
+    os.environ['PYTHONWARNINGS'] = 'default'
 
 
 class SimpleHandler(web.RequestHandler):
