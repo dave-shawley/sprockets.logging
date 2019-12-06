@@ -1,3 +1,4 @@
+import contextlib
 import json
 import logging
 import os
@@ -126,7 +127,7 @@ class TornadoLogFunctionTests(TornadoLoggingTestMixin,
 class JSONFormatterTests(TornadoLoggingTestMixin, testing.AsyncHTTPTestCase):
     def setUp(self):
         super(JSONFormatterTests, self).setUp()
-        self.formatter = logext.JSONRequestFormatter()
+        self.formatter = logext.JSONFormatter()
         self.recorder.setFormatter(self.formatter)
 
     def get_app(self):
@@ -199,3 +200,19 @@ class ContextFilterTests(TornadoLoggingTestMixin, unittest.TestCase):
         logger.error('error message')
         _, line = self.recorder.emitted[0]
         self.assertEqual(line, 'error message {CID %s}' % cid)
+
+
+class DeprecatedTestCases(unittest.TestCase):
+    @contextlib.contextmanager
+    def assert_deprecation_message(self, message):
+        with self.assertWarns(DeprecationWarning) as context:
+            yield
+        for warning_msg in context.warnings:
+            if message in str(warning_msg.message):
+                return
+        self.fail(f'expected deprecation warning {message}')
+
+    def test_that_json_request_formatter_is_deprecated(self):
+        with self.assert_deprecation_message(
+                'JSONRequestFormatter is deprecated'):
+            logext.JSONRequestFormatter()

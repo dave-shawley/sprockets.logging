@@ -17,7 +17,7 @@ LOG_CONFIG = {
     },
     'formatters': {
         'simple': {
-            '()': logext.JSONRequestFormatter
+            '()': logext.JSONFormatter
         }
     },
     'filters': {

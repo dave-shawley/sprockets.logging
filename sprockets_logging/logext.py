@@ -9,12 +9,13 @@ via :func:`~logging.config.dictConfig`.
 
 - :class:`~.ContextFilter` adds properties to every log record so
   that you can safely refer to them in a format
-- :class:`~JSONRequestFormatter` formats log lines as JSON objects
+- :class:`~JSONFormatter` formats log lines as JSON objects
 
 """
 import json
 import logging
 import traceback
+import warnings
 
 
 class ContextFilter(logging.Filter):
@@ -50,7 +51,7 @@ class ContextFilter(logging.Filter):
         return True
 
 
-class JSONRequestFormatter(logging.Formatter):
+class JSONFormatter(logging.Formatter):
     """
     Format lines as JSON documents.
 
@@ -124,3 +125,19 @@ class JSONRequestFormatter(logging.Formatter):
         if tb:
             output['traceback'] = tb
         return json.dumps(output)
+
+
+class JSONRequestFormatter(JSONFormatter):
+    """
+    Format lines as JSON documents.
+
+    .. deprecated:: 2.0.0
+
+       Please use :class:`JSONFormatter` instead.
+
+    """
+    def __init__(self, *args, **kwargs):
+        warnings.warn(
+            'sprockets_logging.logext.JSONRequestFormatter is deprecated'
+            ' and will be removed in a future version', DeprecationWarning)
+        super(JSONRequestFormatter, self).__init__(*args, **kwargs)
