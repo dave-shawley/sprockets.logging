@@ -1,8 +1,11 @@
+import collections
 import contextlib
+import datetime
 import json
 import logging
 import os
 import unittest
+import urllib.parse
 import uuid
 import warnings
 
@@ -27,6 +30,14 @@ class SimpleHandler(web.RequestHandler):
             self.set_status(204)
 
 
+class AugmentedHandler(access.AccessLogRecordingMixin, web.RequestHandler):
+    def get(self):
+        self.current_user = self.get_query_argument('user', default=None)
+        self.write(
+            os.urandom(int(self.get_query_argument('num_bytes', default='0'))))
+        self.set_status(200)
+
+
 class RecordingHandler(logging.Handler):
     def __init__(self):
         super(RecordingHandler, self).__init__()
@@ -36,7 +47,7 @@ class RecordingHandler(logging.Handler):
         self.emitted.append((record, self.format(record)))
 
 
-class TornadoLoggingTestMixin(object):
+class TornadoLoggingTestMixin(unittest.TestCase):
     def setUp(self):
         super(TornadoLoggingTestMixin, self).setUp()
         self.access_log = logging.getLogger('tornado.access')
@@ -219,3 +230,87 @@ class DeprecatedTestCases(unittest.TestCase):
         with self.assert_deprecation_message(
                 'JSONRequestFormatter is deprecated'):
             logext.JSONRequestFormatter()
+
+
+ParsedCommonLog = collections.namedtuple(
+    'ParsedCommonLog',
+    ('remote_ip', 'user_id', 'current_user', 'timestamp', 'method', 'url',
+     'http_version', 'status_code', 'response_size'))
+
+
+class CommonLogFormatTests(TornadoLoggingTestMixin, testing.AsyncHTTPTestCase):
+    _parsed_log_line = None
+
+    def get_app(self):
+        handlers = [
+            web.url(r'/augmented', AugmentedHandler),
+            web.url(r'/simple', SimpleHandler),
+        ]
+        return web.Application(handlers, log_function=access.common_log_format)
+
+    @property
+    def access_record(self):
+        for record, _ in self.recorder.emitted:
+            if record.name == 'tornado.access':
+                return record
+
+    @property
+    def parsed_log_line(self):
+        if self._parsed_log_line is None:
+            parts = self.access_record.message.split()
+            self.assertEqual(len(parts), 10)
+            self._parsed_log_line = ParsedCommonLog(
+                parts[0], parts[1], parts[2],
+                (parts[3][1:] + ' ' + parts[4][:-1]), parts[5][1:], parts[6],
+                parts[7][:-1], parts[8], parts[9])
+        return self._parsed_log_line
+
+    def test_that_redirect_logged_as_info(self):
+        self.fetch('/simple?status_code=303')
+        self.assertEqual(self.access_record.levelno, logging.INFO)
+
+    def test_that_client_error_logged_as_warning(self):
+        self.fetch('/simple?status_code=400')
+        self.assertEqual(self.access_record.levelno, logging.WARNING)
+
+    def test_that_exception_is_logged_as_error(self):
+        self.fetch('/simple?runtime_error=something%20bad%20happened')
+        self.assertEqual(self.access_record.levelno, logging.ERROR)
+
+    def test_that_all_fields_are_included(self):
+        before_start = datetime.datetime.now(datetime.timezone.utc)
+        request_url = self.get_url('/simple')
+        self.fetch(request_url)
+        after_end = datetime.datetime.now(datetime.timezone.utc)
+
+        request_url = urllib.parse.urlsplit(request_url)
+        self.assertEqual(self.parsed_log_line.remote_ip, request_url.hostname)
+        self.assertEqual(self.parsed_log_line.user_id, '-')
+        self.assertEqual(self.parsed_log_line.current_user, '-')
+        # self.assertEqual(self.parsed_log_line.timestamp, '')  see below
+        self.assertEqual(self.parsed_log_line.method, 'GET')
+        self.assertEqual(self.parsed_log_line.url, request_url.path)
+        self.assertEqual(self.parsed_log_line.http_version, 'HTTP/1.1')
+        self.assertEqual(self.parsed_log_line.status_code, '204')
+        self.assertEqual(self.parsed_log_line.response_size, '-')
+
+        # trim sub-second values off of before_start & after_end since the
+        # access log does not include sub-second details
+        before_start = before_start.replace(microsecond=0)
+        after_end = after_end.replace(microsecond=0)
+        parsed_timestamp = datetime.datetime.strptime(
+            self.parsed_log_line.timestamp,
+            '%d/%b/%Y:%H:%M:%S %z',
+        )
+        self.assertTrue(
+            before_start <= parsed_timestamp <= after_end,
+            f'expected {parsed_timestamp} to be between '
+            f'{before_start} and {after_end}')
+
+    def test_augmented_handler_details(self):
+        request_url = self.get_url('/augmented?num_bytes=100&user=me')
+        self.fetch(request_url)
+
+        self.assertEqual(self.parsed_log_line.user_id, '-')
+        self.assertEqual(self.parsed_log_line.current_user, 'me')
+        self.assertEqual(self.parsed_log_line.response_size, '100')

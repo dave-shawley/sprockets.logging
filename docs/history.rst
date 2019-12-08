@@ -11,6 +11,10 @@ Version History
   hard-coding a fixed set of them.
 - Rename ``JSONRequestFormatter`` to ``JSONFormatter``.  The old name is
   deprecated.
+- Add support for the `NCSA Common log format`_
+
+.. _NCSA Common log format: https://www.w3.org/Daemon/User/Config
+   /Logging.html#common-logfile-format
 
 `1.3.2`_ Oct  2, 2015
 ---------------------

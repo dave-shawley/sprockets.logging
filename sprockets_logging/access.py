@@ -8,11 +8,41 @@ various formats.  Each function is meant to be passed as the
 initializer.
 
 """
+import datetime
 import logging
 import os
+import time
 
 import tornado.escape
 import tornado.log
+import tornado.web
+
+
+class AccessLogRecordingMixin(tornado.web.RequestHandler):
+    """
+    Mix this into a request handler to record additional information.
+
+    This request handler mix-in is used in conjunction with the
+    :func:`.common_log_format` access log function to record the number
+    of response bytes written as well as the request start time.
+
+    """
+    def __init__(self, *args, **kwargs):
+        self.request_start_time = time.time()
+        self.response_bytes_written = 0
+        super().__init__(*args, **kwargs)
+
+    def flush(self, include_footers=False):
+        """
+        Extended to track the number of response bytes written.
+
+        See :meth:`tornado.web.RequestHandler.flush` for the super-class
+        documentation.
+
+        """
+        self.response_bytes_written += sum(
+            len(chunk) for chunk in self._write_buffer)
+        return super().flush(include_footers=include_footers)
 
 
 def log_json(handler):
@@ -22,10 +52,22 @@ def log_json(handler):
     :param tornado.web.RequestHandler handler: the handler that
         processed the request
 
-    .. code:: python
+    **Example**
 
-       app = tornado.web.Application([('/', RequestHandler)],
-                                     log_function=tornado_log_function)
+    .. code-block:: json
+
+        {
+            "correlation_id": null,
+            "duration": 3.3241,
+            "environment": null,
+            "headers": {"Host": "127.0.0.1"},
+            "method": "GET",
+            "path": "/apache_pb.gif",
+            "protocol": "http",
+            "query_args": {},
+            "remote_ip": "127.0.0.1",
+            "status_code": 200
+        }
 
     """
     status_code = handler.get_status()
@@ -53,3 +95,79 @@ def log_json(handler):
             'status_code': status_code,
             'environment': os.environ.get('ENVIRONMENT')
         })
+
+
+def common_log_format(handler):
+    """
+    Log requests in the NCSA Common log format.
+
+    :param tornado.web.RequestHandler handler: the request handler that
+        processed the request
+
+    This log format contains the following fields separated by spaces:
+
+    +------------+-----------------------------------------------------------+
+    | remotehost | The remote IP address that made the request.  No attempt  |
+    |            | at reversing this to a DNS name is made.                  |
+    +------------+-----------------------------------------------------------+
+    | rfc931     | The remote "logname" of the user.  This is always "-".    |
+    +------------+-----------------------------------------------------------+
+    | authuser   | The authorized username.  This is derived from the        |
+    |            | :attr:`~tornado.web.RequestHandler.current_user` attribute|
+    |            | of the handler.  If this is unset, then "-" is used.      |
+    +------------+-----------------------------------------------------------+
+    | [date]     | The date and time that the request was received with a    |
+    |            | resolution of one second.  The timestamp is formatted     |
+    |            | using the following strftime format string:               |
+    |            | ``[%d/%b/%Y:%H:%M:%S %z]``.                               |
+    +------------+-----------------------------------------------------------+
+    | "request"  | The request start line surrounded by double-quotes.  This |
+    |            | is a reconstructed version of the first line of the       |
+    |            | request which contains the request method, the URL path & |
+    |            | query parameters, and the HTTP version separated by       |
+    |            | spaces.                                                   |
+    +------------+-----------------------------------------------------------+
+    | status     | The response status code.                                 |
+    +------------+-----------------------------------------------------------+
+    | bytes      | The number of bytes sent in the response or "-" if        |
+    |            | unavailable. You can mix the                              |
+    |            | :class:`.AccessLogRecordingMixin` into your request       |
+    |            | handler to capture this information.                      |
+    +------------+-----------------------------------------------------------+
+
+    **Example**
+    ::
+
+        127.0.0.1 user-identifier frank [10/Oct/2000:13:55:36 -0700] "GET /apache_pb.gif HTTP/1.0" 200 2326
+
+    See https://www.w3.org/Daemon/User/Config/Logging.html#common-logfile-format
+    for the canonical definition of this log format.
+
+    """  # noqa: E501
+    logger = tornado.log.access_log
+    status_code = handler.get_status()
+    request = handler.request
+
+    if status_code < 400:
+        log_level = logging.INFO
+    elif status_code < 500:
+        log_level = logging.WARNING
+    else:
+        log_level = logging.ERROR
+
+    start_time = getattr(handler, 'request_start_time',
+                         getattr(request, '_start_time', 0.0))
+    ts = datetime.datetime.fromtimestamp(start_time, datetime.timezone.utc)
+    start_time = ts.strftime('%d/%b/%Y:%H:%M:%S %z')
+    logger.log(
+        log_level,
+        '%s - %s [%s] "%s %s %s" %s %s',
+        request.remote_ip or '-',
+        handler.current_user or '-',
+        start_time,
+        request.method,
+        request.uri,
+        request.version,
+        status_code,
+        getattr(handler, 'response_bytes_written', '-'),
+    )
