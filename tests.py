@@ -187,6 +187,20 @@ class JSONFormatterTests(TornadoLoggingTestMixin, testing.AsyncHTTPTestCase):
             self.assertEqual(entry['timestamp'],
                              self.formatter.formatTime(record))
 
+    def test_that_encoder_defaults_minimizes_encoding(self):
+        self.assertEqual(logext.JSONFormatter.encoder.indent, 0)
+        self.assertEqual(logext.JSONFormatter.encoder.item_separator, ',')
+        self.assertEqual(logext.JSONFormatter.encoder.key_separator, ':')
+
+    def test_that_json_encoding_can_be_customized(self):
+        logext.JSONFormatter.encoder.indent = 0
+        logext.JSONFormatter.encoder.item_separator = ',  '
+        logext.JSONFormatter.encoder.key_separator = ':  '
+        self.fetch('/')
+        for _, line in self.recorder.emitted:
+            self.assertNotIn('"message":"",', line)
+            self.assertIn('"message":  "",  ', line)
+
 
 class ContextFilterTests(TornadoLoggingTestMixin, unittest.TestCase):
     def setUp(self):

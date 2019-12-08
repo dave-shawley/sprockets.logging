@@ -74,6 +74,15 @@ class JSONFormatter(logging.Formatter):
 
     """
 
+    encoder = json.JSONEncoder(indent=0, separators=(',', ':'))
+    """Class-level JSON encoder used to format records.
+
+    This can be customized at the class-level as necessary.  The default is
+    to minimize the representation by removing indentation as well as the
+    spaces around separators.
+
+    """
+
     _SPECIAL_CASES = frozenset({'msg', 'args', 'timestamp', 'exc_info'})
 
     @staticmethod
@@ -124,7 +133,7 @@ class JSONFormatter(logging.Formatter):
         tb = self.extract_exc_record(record)
         if tb:
             output['traceback'] = tb
-        return json.dumps(output)
+        return self.encoder.encode(output)
 
 
 class JSONRequestFormatter(JSONFormatter):

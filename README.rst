@@ -105,13 +105,29 @@ Running the example will output the following two JSON documents.
      }
    }
 
-The formatter calls ``json.dumps`` on a ``dict`` created from the ``LogRecord``.
-The *default* encoder is used to prevent the formatter from creating a new
-JSON encoder for each log message.
-
 Note that the second document includes a machine-readable version of a standard
 python traceback.  This feature simplifies searching logs using something like
 `JSONPath`_ or selecting fragments using `JSON Pointer`_.
+
+The formatter uses a JSON encoder instance stored on the class to prevent
+creating a new JSON encoder for each log message.  The encoder is configured
+to minimize the representation by default.  You can customize it directly if
+necessary:
+
+.. code-block:: python
+
+   from sprockets_logging import logext
+
+   def safer_default_encoding(obj):
+       if hasattr(obj, 'isoformat'):
+          return obj.isoformat()
+       return str(obj)
+
+
+   logext.JSONFormatter.encoder.default = safer_default_encoding
+   logext.JSONFormatter.encoder.indent = 2
+   logext.JSONFormatter.encoder.item_separator = ', '
+   logext.JSONFormatter.encoder.key_separator = ': '
 
 .. _docker started using them: https://docs.docker.com/config/containers
    /logging/json-file/
