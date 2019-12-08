@@ -24,36 +24,104 @@ Requirements
 
 Example
 -------
-This examples demonstrates the most basic usage of ``sprockets_logging``
+This examples demonstrates using ``sprockets_logging`` to format log messages
+as JSON documents.  Log aggregation for JSON documents has become a bit of a
+standard since `docker started using them`_.  This extension plays nicely with
+many aggregation frameworks.
 
 .. code-block:: python
 
    import logging
-   import sys
-
+   
    from sprockets_logging import logext
-
-
-   formatter = logging.Formatter('%(levelname)s %(message)s {%(context)s}')
-   handler = logging.StreamHandler(sys.stdout)
-   handler.setFormatter(formatter)
-   handler.addFilter(logext.ContextFilter(properties=['context']))
-   logging.Logger.root.addHandler(handler)
-   logging.Logger.root.setLevel(logging.DEBUG)
-
-   # Outputs: INFO Hi there {None}
+   
+   logging.basicConfig(level=logging.INFO)
+   formatter = logext.JSONFormatter()
+   for handler in logging.getLogger().handlers:
+       handler.setFormatter(formatter)
+   
    logging.info('Hi there')
+   try:
+       raise RuntimeError('injected error')
+   except RuntimeError:
+       logging.exception('includes exception stack')
 
-   # Outputs: INFO No KeyError {bah}
-   logging.info('No KeyError', extra={'context': 'bah'})
+Running the example will output the following two JSON documents.
 
-   # Outputs: INFO Now with context! {foo}
-   adapted = logging.LoggerAdapter(logging.Logger.root, extra={'context': 'foo'})
-   adapted.info('Now with context!')
+.. code-block:: json
+
+   {
+     "created": 1575816124.978444,
+     "exc_text": null,
+     "filename": "json-logging.py",
+     "funcName": "<module>",
+     "levelname": "INFO",
+     "levelno": 20,
+     "lineno": 10,
+     "message": "Hi there",
+     "module": "json-logging",
+     "msecs": 978.4440994262695,
+     "name": "root",
+     "pathname": "examples/json-logging.py",
+     "process": 85837,
+     "processName": "MainProcess",
+     "relativeCreated": 5.136251449584961,
+     "stack_info": null,
+     "thread": 4501110208,
+     "threadName": "MainThread",
+     "timestamp": "2019-12-08 09:42:04,978"
+   }
+   {
+     "created": 1575816124.978633,
+     "exc_text": null,
+     "filename": "json-logging.py",
+     "funcName": "<module>",
+     "levelname": "ERROR",
+     "levelno": 40,
+     "lineno": 14,
+     "message": "Includes exception stack",
+     "module": "json-logging",
+     "msecs": 978.632926940918,
+     "name": "root",
+     "pathname": "examples/json-logging.py",
+     "process": 85837,
+     "processName": "MainProcess",
+     "relativeCreated": 5.325078964233398,
+     "stack_info": null,
+     "thread": 4501110208,
+     "threadName": "MainThread",
+     "timestamp": "2019-12-08 09:42:04,978",
+     "traceback": {
+       "message": "injected error",
+       "stack": [
+         {
+           "file": "examples/json-logging.py",
+           "func": "<module>",
+           "line": "12",
+           "text": "raise RuntimeError('injected error')"
+         }
+       ],
+       "type": "RuntimeError"
+     }
+   }
+
+The formatter calls ``json.dumps`` on a ``dict`` created from the ``LogRecord``.
+The *default* encoder is used to prevent the formatter from creating a new
+JSON encoder for each log message.
+
+Note that the second document includes a machine-readable version of a standard
+python traceback.  This feature simplifies searching logs using something like
+`JSONPath`_ or selecting fragments using `JSON Pointer`_.
+
+.. _docker started using them: https://docs.docker.com/config/containers
+   /logging/json-file/
+.. _JSONPath: https://goessner.net/articles/JsonPath/
+.. _JSON Pointer: https://tools.ietf.org/html/rfc6901
 
 Source
 ------
-``sprockets_logging`` source is available on Github at `https://github.com/sprockets/sprockets.logging <https://github.com/sprockets/sprockets.logging>`_
+``sprockets_logging`` source is available on Github at
+`https://github.com/sprockets/sprockets.logging <https://github.com/sprockets/sprockets.logging>`_
 
 License
 -------
@@ -62,15 +130,11 @@ License
 
 .. |Version| image:: https://badge.fury.io/py/sprockets.logging.svg?
    :target: http://badge.fury.io/py/sprockets.logging
-
 .. |Travis| image:: https://travis-ci.org/sprockets/sprockets.logging.svg?branch=master
    :target: https://travis-ci.org/sprockets/sprockets.logging
-
 .. |CodeCov| image:: http://codecov.io/github/sprockets/sprockets.logging/coverage.svg?branch=master
    :target: https://codecov.io/github/sprockets/sprockets.logging?branch=master
-
 .. |Downloads| image:: https://pypip.in/d/sprockets.logging/badge.svg?
    :target: https://pypi.python.org/pypi/sprockets.logging
-
 .. |ReadTheDocs| image:: https://readthedocs.org/projects/sprocketslogging/badge/
    :target: https://sprocketslogging.readthedocs.org
