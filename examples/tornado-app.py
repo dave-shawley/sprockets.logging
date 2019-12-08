@@ -2,7 +2,7 @@ import logging.config
 import signal
 import uuid
 
-from tornado import ioloop, web
+from tornado import ioloop, log, web
 
 LOG_CONFIG = {
     'version': 1,
@@ -40,15 +40,17 @@ LOG_CONFIG = {
 
 
 class RequestHandler(web.RequestHandler):
-    def __init__(self, *args, **kwargs):
-        self.parent_log = kwargs.pop('parent_log')
-        super(RequestHandler, self).__init__(*args, **kwargs)
+    async def prepare(self):
+        self.log_extra = {}
+        logger = logging.getLogger('RequestHandler')
+        self.logger = logging.LoggerAdapter(logger, extra=self.log_extra)
 
-    def prepare(self):
+        maybe_future = super().prepare()
+        if maybe_future:
+            await maybe_future
+
         uniq_id = self.request.headers.get('X-UniqID', uuid.uuid4().hex)
-        self.logger = logging.LoggerAdapter(
-            self.parent_log.getChild('RequestHandler'),
-            extra={'context': uniq_id})
+        self.log_extra['context'] = uniq_id
 
     def get(self, object_id):
         self.logger.debug('fetchin %s', object_id)
@@ -56,8 +58,25 @@ class RequestHandler(web.RequestHandler):
         return self.finish()
 
 
+def contextual_access_logger(handler):
+    """Injects the `log_extra` attribute of `handler` into access logs."""
+    if handler.get_status() < 400:
+        log_method = log.access_log.info
+    elif handler.get_status() < 500:
+        log_method = log.access_log.warning
+    else:
+        log_method = log.access_log.error
+    request_time = 1000.0 * handler.request.request_time()
+    log_method(
+        "%d %s %.2fms",
+        handler.get_status(),
+        handler._request_summary(),
+        request_time,
+        extra=getattr(handler, 'log_extra', {}),
+    )
+
+
 def sig_handler(signo, frame):
-    logging.info('caught signal %d, stopping IO loop', signo)
     iol = ioloop.IOLoop.instance()
     iol.add_callback_from_signal(iol.stop)
 
@@ -65,11 +84,8 @@ def sig_handler(signo, frame):
 if __name__ == '__main__':
     logging.config.dictConfig(LOG_CONFIG)
     logger = logging.getLogger('app')
-    app = web.Application([
-        web.url(r'/(?P<object_id>\w+)',
-                RequestHandler,
-                kwargs={'parent_log': logger}),
-    ])
+    app = web.Application([web.url(r'/(?P<object_id>\w+)', RequestHandler)],
+                          log_function=contextual_access_logger)
     app.listen(8000)
     signal.signal(signal.SIGINT, sig_handler)
     signal.signal(signal.SIGTERM, sig_handler)

@@ -3,12 +3,11 @@ import sys
 
 from sprockets_logging import logext
 
-formatter = logging.Formatter('%(levelname)s %(message)s {%(context)s}')
-handler = logging.StreamHandler(sys.stdout)
-handler.setFormatter(formatter)
-handler.addFilter(logext.ContextFilter(properties=['context']))
-logging.Logger.root.addHandler(handler)
-logging.Logger.root.setLevel(logging.DEBUG)
+logging.basicConfig(stream=sys.stdout,
+                    level=logging.DEBUG,
+                    format='%(levelname)s %(message)s {%(context)s}')
+root = logging.getLogger()
+root.handlers[0].addFilter(logext.ContextFilter(properties=['context']))
 
 # Outputs: INFO Hi there {None}
 logging.info('Hi there')

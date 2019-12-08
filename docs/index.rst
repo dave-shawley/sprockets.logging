@@ -4,8 +4,8 @@
    :maxdepth: 2
    :hidden:
 
-   api
    examples
+   api
    history
 
 Indices and tables
