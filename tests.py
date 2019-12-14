@@ -205,11 +205,11 @@ class JSONFormatterTests(TornadoLoggingTestMixin, testing.AsyncHTTPTestCase):
 class ContextFilterTests(TornadoLoggingTestMixin, unittest.TestCase):
     def setUp(self):
         super(ContextFilterTests, self).setUp()
+        self.filter = logext.ContextFilter(properties=['correlation_id'])
         self.logger = logging.getLogger('test-logger')
         self.recorder.setFormatter(
             logging.Formatter('%(message)s {CID %(correlation_id)s}'))
-        self.recorder.addFilter(
-            logext.ContextFilter(properties=['correlation_id']))
+        self.recorder.addFilter(self.filter)
 
     def test_that_property_is_set_to_none_by_filter_when_missing(self):
         self.logger.error('error message')
@@ -228,6 +228,16 @@ class ContextFilterTests(TornadoLoggingTestMixin, unittest.TestCase):
         logger.error('error message')
         _, line = self.recorder.emitted[0]
         self.assertEqual(line, 'error message {CID %s}' % cid)
+
+    def test_that_default_values_can_be_specified(self):
+        self.filter.properties = {'correlation_id': '-'}
+        self.logger.error('error message')
+        _, line = self.recorder.emitted[0]
+        self.assertEqual(line, 'error message {CID -}')
+
+    def test_that_setting_properties_to_none_clears_property_set(self):
+        self.filter.properties = None
+        self.assertDictEqual({}, self.filter.properties)
 
 
 class DeprecatedTestCases(unittest.TestCase):

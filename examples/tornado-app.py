@@ -1,6 +1,5 @@
 import logging.config
 import signal
-import uuid
 
 from tornado import ioloop, log, web
 
@@ -23,7 +22,9 @@ LOG_CONFIG = {
     'filters': {
         'context': {
             '()': 'sprockets_logging.logext.ContextFilter',
-            'properties': ['context'],
+            'properties': {
+                'context': '-'
+            },
         },
     },
     'loggers': {
@@ -49,8 +50,9 @@ class RequestHandler(web.RequestHandler):
         if maybe_future:
             await maybe_future
 
-        uniq_id = self.request.headers.get('X-UniqID', uuid.uuid4().hex)
-        self.log_extra['context'] = uniq_id
+        uniq_id = self.request.headers.get('X-UniqID')
+        if uniq_id:
+            self.log_extra['context'] = uniq_id
 
     def get(self, object_id):
         self.logger.debug('fetchin %s', object_id)

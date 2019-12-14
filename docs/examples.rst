@@ -17,10 +17,13 @@ the custom filter and format string into the logging infrastructure and
 insert context easily with :class:`logging.LoggerAdapter`.
 
 .. literalinclude:: ../examples/tornado-app.py
-   :emphasize-lines: 14,20,24-27,46,53,75
+   :emphasize-lines: 14,20,24-29,48,56,78
 
 The ``contextual_access_logger`` function includes the context in the
-Tornado access logs.
+Tornado access logs.  This example demonstrates the ability to specify
+arbitrary default values for context values.  In this case, the context is
+logged as ``-`` if the request does not contain a ``X-UniqID`` request
+header.
 
 Application JSON Logging
 -------------------------

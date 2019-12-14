@@ -22,9 +22,11 @@ class ContextFilter(logging.Filter):
     """
     Ensures that properties exist on a LogRecord.
 
-    :param list properties: optional list of properties that
-        will be added to LogRecord instances if they are missing
-    :type properties: list or None
+    :param properties: optional properties that will be added to LogRecord
+        instances if they are missing.  If specified as a list then
+        :data:`None` is used as a default value for each property.
+        Otherwise the dictionary value is the default value.
+    :type properties: list[str] or dict[str,any] or None
 
     This filter implementation will ensure that a set of properties
     exists on every log record which means that you can always refer
@@ -35,7 +37,26 @@ class ContextFilter(logging.Filter):
     """
     def __init__(self, name='', properties=None):
         logging.Filter.__init__(self, name)
-        self.properties = list(properties) if properties else []
+        self._properties = {}
+        self.properties = properties
+
+    @property
+    def properties(self):
+        """Dictionary of property names to default values."""
+        return self._properties
+
+    @properties.setter
+    def properties(self, new_properties):
+        if not new_properties:
+            self._properties.clear()
+        else:
+            try:
+                self._properties = {
+                    name: default
+                    for name, default in new_properties.items()
+                }
+            except AttributeError:
+                self._properties = {name: None for name in new_properties}
 
     def filter(self, record):
         """
@@ -45,9 +66,9 @@ class ContextFilter(logging.Filter):
         :returns: always returns :data:`True`
 
         """
-        for property_name in self.properties:
+        for property_name, property_default in self.properties.items():
             if not hasattr(record, property_name):
-                setattr(record, property_name, None)
+                setattr(record, property_name, property_default)
         return True
 
 

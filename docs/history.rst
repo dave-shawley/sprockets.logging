@@ -13,6 +13,7 @@ Version History
   deprecated.
 - Add support for the `NCSA Common log format`_
 - Make the JSON encoder instance customizable.
+- Add support for specifying default values to ``ContextFilter``.
 
 .. _NCSA Common log format: https://www.w3.org/Daemon/User/Config
    /Logging.html#common-logfile-format
