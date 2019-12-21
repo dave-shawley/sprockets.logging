@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import sphinx_rtd_theme
 import sprockets_logging
 
 needs_sphinx = '1.0'
@@ -27,3 +28,9 @@ intersphinx_mapping = {
 
 # https://sphinxcontrib-httpdomain.readthedocs.io/en/stable/
 extensions.append('sphinxcontrib.httpdomain')
+
+# https://sphinx-rtd-theme.readthedocs.io/en/stable/configuring.html
+html_theme = 'sphinx_rtd_theme'
+html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+canonical_url = 'https://sprocketslogging.readthedocs.io/'
+github_url = 'https://github.com/sprockets/sprockets.logging'
