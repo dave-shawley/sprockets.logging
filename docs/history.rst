@@ -12,11 +12,14 @@ Version History
 - Rename ``JSONRequestFormatter`` to ``JSONFormatter``.  The old name is
   deprecated.
 - Add support for the `NCSA Common log format`_
+- Add support for the `Apache Combined log format`_
 - Make the JSON encoder instance customizable.
 - Add support for specifying default values to ``ContextFilter``.
 
 .. _NCSA Common log format: https://www.w3.org/Daemon/User/Config
    /Logging.html#common-logfile-format
+.. _Apache Combined log format: http://httpd.apache.org/docs/2.2
+   /logs.html#combined
 
 `1.3.2`_ Oct  2, 2015
 ---------------------

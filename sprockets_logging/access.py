@@ -45,6 +45,28 @@ class AccessLogRecordingMixin(tornado.web.RequestHandler):
         return super().flush(include_footers=include_footers)
 
 
+def _extract_log_info(handler):
+    """
+    :param tornado.web.RequestHandler handler:
+    :rtype: tuple[int,int,tornado.httputil.HTTPServerRequest,str]
+    """
+    status_code = handler.get_status()
+    if status_code < 400:
+        log_level = logging.INFO
+    elif status_code < 500:
+        log_level = logging.WARNING
+    else:
+        log_level = logging.ERROR
+
+    request = handler.request
+    start_time = getattr(handler, 'request_start_time',
+                         getattr(request, '_start_time', 0.0))
+    ts = datetime.datetime.fromtimestamp(start_time, datetime.timezone.utc)
+    start_time = ts.strftime('%d/%b/%Y:%H:%M:%S %z')
+
+    return status_code, log_level, request, start_time
+
+
 def log_json(handler):
     """
     Format access logs as JSON documents.
@@ -144,22 +166,8 @@ def common_log_format(handler):
     for the canonical definition of this log format.
 
     """  # noqa: E501
-    logger = tornado.log.access_log
-    status_code = handler.get_status()
-    request = handler.request
-
-    if status_code < 400:
-        log_level = logging.INFO
-    elif status_code < 500:
-        log_level = logging.WARNING
-    else:
-        log_level = logging.ERROR
-
-    start_time = getattr(handler, 'request_start_time',
-                         getattr(request, '_start_time', 0.0))
-    ts = datetime.datetime.fromtimestamp(start_time, datetime.timezone.utc)
-    start_time = ts.strftime('%d/%b/%Y:%H:%M:%S %z')
-    logger.log(
+    status_code, log_level, request, start_time = _extract_log_info(handler)
+    tornado.log.access_log.log(
         log_level,
         '%s - %s [%s] "%s %s %s" %s %s',
         request.remote_ip or '-',
@@ -170,4 +178,43 @@ def common_log_format(handler):
         request.version,
         status_code,
         getattr(handler, 'response_bytes_written', '-'),
+    )
+
+
+def combined_log_format(handler):
+    """
+    Log requests in the Apache "combined" log format.
+
+    :param tornado.web.RequestHandler handler: the request handler that
+        processed the request
+
+    This log format contains the same fields as the :func:`.common_log_format`
+    with two additional quoted string fields appended:
+
+    - the value of the :http:header:`Referer` header
+    - the value of the :http:header:`User-Agent` header
+    
+    **Example**
+    ::
+    
+        127.0.0.1 - frank [10/Oct/2000:13:55:36 -0700] "GET /apache_pb.gif HTTP/1.0" 200 2326 "http://www.example.com/start.html" "Mozilla/4.08 [en] (Win98; I ;Nav)"
+
+    See http://httpd.apache.org/docs/2.2/logs.html#combined for the
+    canonical definition of this log format.
+
+    """  # noqa: E501
+    status_code, log_level, request, start_time = _extract_log_info(handler)
+    tornado.log.access_log.log(
+        log_level,
+        '%s - %s [%s] "%s %s %s" %s %s "%s" "%s"',
+        request.remote_ip or '-',
+        handler.current_user or '-',
+        start_time,
+        request.method,
+        request.uri,
+        request.version,
+        status_code,
+        getattr(handler, 'response_bytes_written', '-'),
+        request.headers.get('Referer', '-'),
+        request.headers.get('User-Agent', '-'),
     )

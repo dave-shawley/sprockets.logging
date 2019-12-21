@@ -4,6 +4,7 @@ import datetime
 import json
 import logging
 import os
+import re
 import unittest
 import urllib.parse
 import uuid
@@ -263,6 +264,7 @@ ParsedCommonLog = collections.namedtuple(
 
 
 class CommonLogFormatTests(TornadoLoggingTestMixin, testing.AsyncHTTPTestCase):
+    expected_log_token_count = 10
     _parsed_log_line = None
 
     def get_app(self):
@@ -282,7 +284,7 @@ class CommonLogFormatTests(TornadoLoggingTestMixin, testing.AsyncHTTPTestCase):
     def parsed_log_line(self):
         if self._parsed_log_line is None:
             parts = self.access_record.message.split()
-            self.assertEqual(len(parts), 10)
+            self.assertEqual(len(parts), self.expected_log_token_count)
             self._parsed_log_line = ParsedCommonLog(
                 parts[0], parts[1], parts[2],
                 (parts[3][1:] + ' ' + parts[4][:-1]), parts[5][1:], parts[6],
@@ -338,3 +340,36 @@ class CommonLogFormatTests(TornadoLoggingTestMixin, testing.AsyncHTTPTestCase):
         self.assertEqual(self.parsed_log_line.user_id, '-')
         self.assertEqual(self.parsed_log_line.current_user, 'me')
         self.assertEqual(self.parsed_log_line.response_size, '100')
+
+
+class CombinedLogFormatTests(CommonLogFormatTests):
+    expected_log_token_count = 12
+
+    def get_app(self):
+        app = super().get_app()
+        app.settings['log_function'] = access.combined_log_format
+        return app
+
+    @property
+    def quoted_tokens(self):
+        quoted_tokens = re.findall(r'"([^"]*)"', self.access_record.message)
+        self.assertEqual(3, len(quoted_tokens))
+        return quoted_tokens
+
+    def test_that_additional_fields_default_to_hyphen(self):
+        self.fetch('/simple')
+        self.assertEqual('-', self.quoted_tokens[1])
+        self.assertEqual('-', self.quoted_tokens[2])
+
+    def test_that_referrer_is_logged(self):
+        self.fetch('/simple', headers={'Referer': 'https://example.com'})
+        self.assertEqual('https://example.com', self.quoted_tokens[1])
+
+    def test_that_user_agent_is_logged(self):
+        self.fetch(
+            '/simple',
+            headers={
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2)'
+            })
+        self.assertEqual('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2)',
+                         self.quoted_tokens[2])

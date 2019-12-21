@@ -24,3 +24,6 @@ intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
     'tornado': ('https://www.tornadoweb.org/en/stable/', None),
 }
+
+# https://sphinxcontrib-httpdomain.readthedocs.io/en/stable/
+extensions.append('sphinxcontrib.httpdomain')
