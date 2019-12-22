@@ -6,7 +6,9 @@ before_install:
 - pip install nose coverage codecov tornado
 install:
 - pip install -e .
-script: nosetests
+script:
+- mkdir -p build
+- nosetests --with-coverage
 after_success:
 - codecov
 deploy:
